@@ -2,12 +2,12 @@ from flask import Flask
 # from flask_sqlalchemy import SQLAlchemy
 # from os import path
 # from flask_login import LoginManager
-from website.views import views
-from website.events import events
-from website.tickets import tickets
-from website.users import users
-from website.feedbacks import feedbacks
-from website.models import db
+from .website.views import views
+from .website.events import events
+from .website.tickets import tickets
+from .website.users import users
+from .website.feedbacks import feedbacks
+from .website.models import db
 from flask_migrate import Migrate
 import os
 import sys
