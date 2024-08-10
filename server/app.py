@@ -12,10 +12,11 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
