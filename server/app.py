@@ -22,10 +22,10 @@ migrate = Migrate(app, db)
 db.init_app(app)
 
 app.register_blueprint(views, url_prefix='/')
-app.register_blueprint(events, url_prefix='/')
-app.register_blueprint(tickets, url_prefix='/')
-app.register_blueprint(users, url_prefix='/')
-app.register_blueprint(feedbacks, url_prefix='/')
+app.register_blueprint(events, url_prefix='/events')
+app.register_blueprint(tickets, url_prefix='/tickets')
+app.register_blueprint(users, url_prefix='/users')
+app.register_blueprint(feedbacks, url_prefix='/feedbacks')
 
     # login_manager = LoginManager()
     # login_manager.login_view = 'auth.login'

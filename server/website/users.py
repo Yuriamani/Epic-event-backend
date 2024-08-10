@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 from .models import db, User
-from .utils import validate_request_data, handle_error
+from .utils import validate_request_data, handle_error, validate_email
 from flask_restful import Api, Resource
+from werkzeug.security import generate_password_hash
 
 users = Blueprint('users', __name__)
 api = Api(users)
@@ -13,10 +14,15 @@ class Users(Resource):
 
     def post(self):
         data = request.json
-        required_fields = ['username', 'email', 'password_hash']
+        required_fields = ['username', 'email', 'password']
         if not validate_request_data(data, required_fields):
             return handle_error('Missing required fields', 400)
-        user = User(username=data['username'], email=data['email'],password_hash=data['password_hash'])
+        email = data.get('email')
+        if not validate_email(email):
+            return handle_error('Invalid email format', 400)
+        password = data.get('password')
+        password_hash = generate_password_hash(password)
+        user = User(username=data['username'], email=data['email'],password_hash=password_hash)
         db.session.add(user)
         db.session.commit()
         return user.to_dict(), 201
@@ -34,9 +40,14 @@ class Users(Resource):
         if 'username' in data:
             user.username = data['username']
         if 'email' in data:
-            user.email = data['email']
-        if 'password_hash' in data:
-            user.password_hash = data['password_hash']
+            email = data.get('email')
+            if not validate_email(email):
+                return handle_error('Invalid email format', 400)
+            user.email = email
+        if 'password' in data:
+            password = data.get('password')
+            password_hash = generate_password_hash(password)
+            user.password_hash = password_hash
 
         db.session.commit()
         return user.to_dict(), 200
