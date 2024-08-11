@@ -1,24 +1,42 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy import MetaData
+from sqlalchemy.orm import validates
+import re
 import datetime
 
-db = SQLAlchemy()
+metadata = MetaData()
+db = SQLAlchemy(metadata=metadata)
 
-class User(db.Model, SerializerMixin):
+class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String, unique=True, nullable=False)
-    username = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(129), nullable=False)
+    role = db.Column(db.String(50), default='user')
+    created_at = db.Column(db.DateTime, default=db.func.now())
 
-    serialize_only = ('id', 'email', 'username')
-    exclude = ('orders')
+    @validates('email')
+    def validate_email(self, key, email):
+        regex = r'^\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        if not re.match(regex, email):
+            raise ValueError("Invalid email address")
+        return email
 
     def __repr__(self):
-        return f'<User {self.id}, {self.username}>'
+        return f"<User {self.id}: {self.username}>"
 
-class Event(db.Model, SerializerMixin):
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "created_at": str(self.created_at),
+        }
+
+class Event(db.Model):
     __tablename__ = 'events'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -29,13 +47,21 @@ class Event(db.Model, SerializerMixin):
     capacity = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
 
-    serialize_only = ('id', 'image', 'name', 'datetime', 'location', 'capacity', 'description')
-    exclude = ('user_events', 'feedback', 'tickets', 'event_organizers')
-
     def __repr__(self):
         return f'<Event {self.id}, {self.name}>'
 
-class UserEvent(db.Model, SerializerMixin):
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "image": self.image,
+            "name": self.name,
+            "datetime": str(self.datetime),
+            "location": self.location,
+            "capacity": self.capacity,
+            "description": self.description,
+        }
+
+class UserEvent(db.Model):
     __tablename__ = 'user_events'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -43,28 +69,39 @@ class UserEvent(db.Model, SerializerMixin):
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, unique=True)
     ticket_number = db.Column(db.Integer, nullable=False)
 
-    serialize_only = ('id', 'user_id', 'event_id', 'ticket_number')
-    exclude = ('user', 'event')
-
     def __repr__(self):
         return f'<UserEvent {self.id}, {self.user_id}, {self.event_id}>'
 
-class Feedback(db.Model, SerializerMixin):
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "event_id": self.event_id,
+            "ticket_number": self.ticket_number,
+        }
+
+class Feedback(db.Model):
     __tablename__ = 'feedback'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
     feedback = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-
-    serialize_only = ('id', 'user_id', 'event_id', 'feedback', 'created_at')
-    exclude = ('user', 'event')
+    created_at = db.Column(db.DateTime, default=db.func.now())
 
     def __repr__(self):
         return f'<Feedback {self.id}, {self.user_id}, {self.event_id}>'
 
-class Ticket(db.Model, SerializerMixin):
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "event_id": self.event_id,
+            "feedback": self.feedback,
+            "created_at": str(self.created_at),
+        }
+
+class Ticket(db.Model):
     __tablename__ = 'tickets'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -72,21 +109,30 @@ class Ticket(db.Model, SerializerMixin):
     ticket_number = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
 
-    serialize_only = ('id', 'event_id', 'ticket_number', 'price')
-    exclude = ('event',)
-
     def __repr__(self):
         return f'<Ticket {self.id}, {self.event_id}>'
 
-class EventOrganizer(db.Model, SerializerMixin):
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "event_id": self.event_id,
+            "ticket_number": self.ticket_number,
+            "price": self.price,
+        }
+
+class EventOrganizer(db.Model):
     __tablename__ = 'event_organizers'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False, unique=True)
     organizer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
 
-    serialize_only = ('id', 'event_id', 'organizer_id')
-    exclude = ('event', 'organizer')
-
     def __repr__(self):
         return f'<EventOrganizer {self.id}, {self.event_id}, {self.organizer_id}>'
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "event_id": self.event_id,
+            "organizer_id": self.organizer_id,
+        }
