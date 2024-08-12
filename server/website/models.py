@@ -24,7 +24,7 @@ class Event(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     image = db.Column(db.String, nullable=False)
     name = db.Column(db.String, nullable=False)
-    datetime = db.Column(db.DateTime)  # Changed from Text to DateTime
+    datetime = db.Column(db.Text, nullable=False)  # Changed from DateTime to Text
     location = db.Column(db.Text, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
