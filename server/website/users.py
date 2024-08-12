@@ -32,9 +32,6 @@ class Users(Resource):
     
     def patch(self):
         data = request.json
-        id = data.get('id')
-        if id is None:
-            return {'error': 'Missing user ID'}, 400
 
         user = User.query.get(id)
         if user is None:
