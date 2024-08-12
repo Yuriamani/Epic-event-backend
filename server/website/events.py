@@ -48,7 +48,7 @@ class Events(Resource):
         return event.to_dict(), 201
     
     
-class Event(Resource):
+class EventResource(Resource):
     def get(self, id):
         if id is None:
             return {'error': 'Missing event ID'}, 400
@@ -56,7 +56,7 @@ class Event(Resource):
         event = Event.query.get(id)
         if event is None:
             return {'error': 'Event not found'}, 404
-        return event.to_dict(), 201
+        return event.to_dict(), 200
 
     def delete(self, id):
         if id is None:
@@ -68,7 +68,7 @@ class Event(Resource):
 
         db.session.delete(event)
         db.session.commit()
-        return {'message': 'Event deleted successfully'}, 200    
+        return {'message': 'Event deleted successfully'}, 204   
 
-api.add_resource(Event, "/events/<int:id>")
+api.add_resource(EventResource, "/events/<int:id>")
 api.add_resource(Events, "/events")
