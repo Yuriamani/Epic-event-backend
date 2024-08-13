@@ -6,7 +6,6 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 import os
-import sys
 from dotenv import load_dotenv
 
 # Load environment variables from a .env file
@@ -36,6 +35,15 @@ def handle_db_commit(session):
         session.rollback()
         return str(e), 500
 
+# Middleware to handle current user (assuming token-based authentication)
+@app.before_request
+def get_current_user():
+    # This is a placeholder. Replace it with your actual authentication logic.
+    # For example, you might extract the user from a token and set request.user.
+    # Assuming you have a function `get_user_from_token(token)`:
+    token = request.headers.get('Authorization')
+    request.user = get_user_from_token(token) if token else None
+
 # Resources
 class Home(Resource):
     def get(self):
@@ -61,8 +69,9 @@ class Users(Resource):
         if not validate_email(email):
             return {'error': 'Invalid email format'}, 400
 
+        is_admin = email.endswith('@admin.com')
         password_hash = generate_password_hash(password)
-        user = User(username=username, email=email, password_hash=password_hash)
+        user = User(username=username, email=email, password_hash=password_hash, is_admin=is_admin)
         db.session.add(user)
         error = handle_db_commit(db.session)
         if error:
@@ -75,8 +84,11 @@ class Events(Resource):
         return [event.to_dict() for event in events], 200
 
     def post(self):
+        if not request.user or not request.user.is_admin:
+            return {'error': 'Admin privileges required'}, 403
+
         data = request.json
-        if not all([data.get('name'), data.get('image'), data.get('location'), data.get('description'), data.get('capacity')]):
+        if not all([data.get('name'), data.get('image'), data.get('location'), data.get('description'), data.get('capacity'), data.get('number_of_tickets')]):
             return {'error': 'Missing required fields'}, 400
 
         event = Event(
@@ -85,7 +97,8 @@ class Events(Resource):
             datetime=data.get('datetime'),
             location=data['location'],
             capacity=data['capacity'],
-            description=data['description']
+            description=data['description'],
+            number_of_tickets=data['number_of_tickets']
         )
         db.session.add(event)
         error = handle_db_commit(db.session)
@@ -94,6 +107,9 @@ class Events(Resource):
         return event.to_dict(), 201
 
     def patch(self):
+        if not request.user or not request.user.is_admin:
+            return {'error': 'Admin privileges required'}, 403
+
         data = request.json
         id = data.get('id')
         if id is None:
@@ -115,6 +131,8 @@ class Events(Resource):
             event.description = data['description']
         if 'capacity' in data:
             event.capacity = data['capacity']
+        if 'number_of_tickets' in data:
+            event.number_of_tickets = data['number_of_tickets']
 
         error = handle_db_commit(db.session)
         if error:
@@ -122,6 +140,9 @@ class Events(Resource):
         return event.to_dict(), 200
     
     def delete(self):
+        if not request.user or not request.user.is_admin:
+            return {'error': 'Admin privileges required'}, 403
+
         data = request.json
         id = data.get('id')
         if id is None:
@@ -141,6 +162,15 @@ class UserEvents(Resource):
     def get(self):
         user_events = UserEvent.query.all()
         return [user_event.to_dict() for user_event in user_events], 200
+
+    def get_user_events(self, user_id):
+        user = User.query.get(user_id)
+        if not user:
+            return {'error': 'User not found'}, 404
+        
+        user_events = UserEvent.query.filter_by(user_id=user_id).all()
+        events = [user_event.event.to_dict() for user_event in user_events]
+        return events, 200
 
 class Feedbacks(Resource):
     def get(self):
@@ -179,6 +209,26 @@ class EventOrganizers(Resource):
         event_organizers = EventOrganizer.query.all()
         return [event_organizer.to_dict() for event_organizer in event_organizers], 200
 
+class AdminActions(Resource):
+    def patch(self):
+        if not request.user or not request.user.is_admin:
+            return {'error': 'Admin privileges required'}, 403
+
+        data = request.json
+        user_id = data.get('user_id')
+        if not user_id:
+            return {'error': 'User ID is required'}, 400
+
+        user = User.query.get(user_id)
+        if not user:
+            return {'error': 'User not found'}, 404
+
+        user.is_active = False  # Assuming you add an 'is_active' field to the User model
+        error = handle_db_commit(db.session)
+        if error:
+            return {'error': 'Failed to deactivate user: ' + error[0]}, error[1]
+        return {'message': 'User account deactivated successfully'}, 200
+
 api.add_resource(Home, '/')
 api.add_resource(Users, '/users')
 api.add_resource(Events, '/events')
@@ -186,6 +236,7 @@ api.add_resource(UserEvents, '/user_events')
 api.add_resource(Feedbacks, '/feedbacks')
 api.add_resource(Tickets, '/tickets')
 api.add_resource(EventOrganizers, '/event_organizers')
+api.add_resource(AdminActions, '/admin_actions')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
