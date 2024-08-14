@@ -1,6 +1,6 @@
 from sqlalchemy_serializer import SerializerMixin
 import datetime
-from website import db
+from . import db
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'

@@ -1,4 +1,4 @@
-from website import db, login_manager
+from . import db, login_manager
 from flask import Blueprint, request, jsonify, redirect, url_for
 from .models import User
 from .utils import validate_request_data, handle_error

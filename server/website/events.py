@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from website import db
+from . import db
 from .models import Event
 from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource

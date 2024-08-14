@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from website import db
+from . import db
 from .models import Feedback
 from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource
