@@ -8,12 +8,12 @@
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
 from flask import Flask
-from .website.views import views
-from .website.events import events
-from .website.tickets import tickets
-from .website.users import users
-from .website.feedbacks import feedbacks
-from .website.models import db
+from website.views import views
+from website.events import events
+from website.tickets import tickets
+from website.users import users
+from website.feedbacks import feedbacks
+from website.models import db
 from flask_migrate import Migrate
 # import os
 from dotenv import load_dotenv

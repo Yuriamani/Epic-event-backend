@@ -67,24 +67,23 @@ class Users(Resource):
         return {'message': 'User deleted successfully'}, 200
 
 api.add_resource(Users, '/users')
-
+   
 class UserLogin(Resource):
     def post(self):
         data = request.json
+        
         username_or_email = data.get('username') or data.get('email')
-        password = data.get('password')
+        if not username_or_email or not data.get('password'):
+            return {'error': 'Please provide a username or email, and password.'}, 400
 
-        if not username_or_email or not password:
-            return handle_error('Missing username/email or password', 400)
+        user = User.query.filter((User.username == username_or_email) | (User.email == username_or_email)).first()
 
-        user = User.query.filter(
-            (User.username == username_or_email) | (User.email == username_or_email)
-        ).first()
-
-        if user and check_password_hash(user.password_hash, password):
-            return jsonify({'message': 'Login successful'}), 200
+        if user and check_password_hash(user.password_hash, data.get('password')):
+            return {'message': 'Login successful!'}, 200
+        elif user:
+            return {'error': 'Invalid password. Please try again.'}, 401
         else:
-            return handle_error('Invalid username, email, or password', 401)
+            return {'error': 'User not found. Please sign up first.'}, 404
 
 api.add_resource(UserLogin, '/users/login')
-   
+  
