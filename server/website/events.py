@@ -42,10 +42,10 @@ class Events(Resource):
         db.session.commit()
         return event.to_dict(), 200
 
-    @login_required
+    # @login_required
     def post(self):
-        if current_user.role != 'admin':
-            return jsonify({'message': 'Access forbidden'}), 403
+        # if current_user.role != 'admin':
+        #     return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
         required_fields = ['name', 'image', 'datetime', 'location', 'capacity', 'description']
         if not validate_request_data(data, required_fields):

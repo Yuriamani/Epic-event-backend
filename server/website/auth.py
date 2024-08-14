@@ -19,24 +19,21 @@ class UserSignUp(Resource):
         required_fields = ['username', 'email', 'password1', 'password2', 'role']
         if not validate_request_data(data, required_fields):
             return handle_error('Missing required fields', 400)
-        username = data.get('username')
         email = data.get('email')
         password1 = data.get('password1')
         password2 = data.get('password2')
-        role = data.get('role', 'user') # Default role is 'user'
+        role = data.get('role', 'user')  # Default role is 'user'
+
+        if password1 != password2:
+            return handle_error('Passwords do not match', 400)
+
+        if role not in ['user', 'admin']:
+            return handle_error('Invalid role', 400)
 
         if User.query.filter_by(email=email).first():
             return {'message': 'User already exists'}, 400
-        elif len(email) < 4:
-            {'error': 'must be greater than 3 characters'}, 400
-        elif len(username) < 2:
-            {'error': 'Username must be greater than 1 character'}, 400
-        elif password1 != password2:
-            {'error': 'passwords don\'t match'}, 400
-        elif len(password1) < 7:
-            {'error': 'Passwords must be atleast 7 characters'}, 400
         else:
-            new_user = User(email=email, role=role, username=username, password=generate_password_hash(
+            new_user = User(email=data['email'], role=role, username=data['username'], password=generate_password_hash(
                 password1, method='pbkdf2:sha256'))
             db.session.add(new_user)
             db.session.commit()
@@ -53,9 +50,9 @@ class UserLogin(Resource):
         if user:
             if check_password_hash(user.password, password):
                 login_user(user, remember=True)
-                return {'user': {'id': user.id, 'email': user.email}}
+                return {"message": "Logged in successfully"}
             else:
-                {'error': 'Incorrect password'}, 401
+                return {'error': 'Incorrect password'}, 401
         else:
             return {'error': 'Email does not exist'}, 404
 
