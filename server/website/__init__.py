@@ -13,6 +13,7 @@ login_manager = LoginManager()
 def create_app():
     load_dotenv()
     app = Flask(__name__)
+    app.secret_key = 'yuriamani7'
     cors = CORS(app, origins='*')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://epic_events_h3bm_user:ykU3suwVensjbDjqsCfnBapwB4DBp1Pa@dpg-cqu51ebv2p9s73d0sfg0-a.frankfurt-postgres.render.com/epic_events_h3bm'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

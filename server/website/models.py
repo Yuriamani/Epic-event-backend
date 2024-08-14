@@ -1,8 +1,9 @@
 from sqlalchemy_serializer import SerializerMixin
+from flask_login import UserMixin
 import datetime
 from . import db
 
-class User(db.Model, SerializerMixin):
+class User(db.Model, SerializerMixin, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
