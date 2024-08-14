@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 import datetime
-
-db = SQLAlchemy()
+from website import db
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
@@ -10,7 +8,8 @@ class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String, unique=True, nullable=False)
     username = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
+    role = db.Column(db.String(50), nullable=False)
 
     serialize_only = ('id', 'email', 'username')
     exclude = ('orders',)
@@ -28,9 +27,11 @@ class Event(db.Model, SerializerMixin):
     location = db.Column(db.Text, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
+    vip_tickets = db.Column(db.Integer, nullable=False, default=0)
+    normal_tickets = db.Column(db.Integer, nullable=False, default=0)
 
-    serialize_only = ('id', 'image', 'name', 'datetime', 'location', 'capacity', 'description')
-    exclude = ('user_events', 'feedback', 'tickets', 'event_organizers')
+    serialize_only = ('id', 'image', 'name', 'datetime', 'location', 'capacity', 'description', 'vip_tickets', 'normal_tickets')
+    exclude = ('user_events', 'feedback', 'event_organizers')
 
     def __repr__(self):
         return f'<Event {self.id}, {self.name}>'

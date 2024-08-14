@@ -1,5 +1,6 @@
 from flask import Blueprint, request
-from .models import db, User
+from website import db
+from .models import User
 from .utils import validate_request_data, handle_error, validate_email
 from flask_restful import Api, Resource
 from werkzeug.security import generate_password_hash

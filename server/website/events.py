@@ -1,17 +1,22 @@
-from flask import Blueprint, request
-from .models import db, Event
+from flask import Blueprint, request, jsonify
+from website import db
+from .models import Event
 from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource
+from flask_login import login_required, current_user
 
 events = Blueprint('events', __name__)
-api = Api(events)
+api = Api(events) 
 
 class Events(Resource):
     def get(self):
         events = Event.query.all()
         return [event.to_dict() for event in events], 200
     
+    @login_required
     def patch(self):
+        if current_user.role != 'admin':
+            return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
         id = data.get('id')
         if id is None:
@@ -37,7 +42,10 @@ class Events(Resource):
         db.session.commit()
         return event.to_dict(), 200
 
+    @login_required
     def post(self):
+        if current_user.role != 'admin':
+            return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
         required_fields = ['name', 'image', 'datetime', 'location', 'capacity', 'description']
         if not validate_request_data(data, required_fields):
@@ -58,7 +66,10 @@ class EventResource(Resource):
             return {'error': 'Event not found'}, 404
         return event.to_dict(), 200
 
+    @login_required
     def delete(self, id):
+        if current_user.role != 'admin':
+            return jsonify({'message': 'Access forbidden'}), 403
         if id is None:
             return {'error': 'Missing event ID'}, 400
 

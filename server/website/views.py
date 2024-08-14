@@ -1,4 +1,4 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, make_response
 from .models import UserEvent, EventOrganizer
 from flask_restful import Api, Resource
 
