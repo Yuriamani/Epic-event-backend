@@ -7,9 +7,9 @@ class User(db.Model, SerializerMixin, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String, unique=True, nullable=False)
-    username = db.Column(db.String, unique=True, nullable=False)
-    password = db.Column(db.String, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(50), nullable=False)
 
     serialize_only = ('id', 'email', 'username')
@@ -24,7 +24,7 @@ class Event(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     image = db.Column(db.String, nullable=False)
     name = db.Column(db.String, nullable=False)
-    datetime = db.Column(db.Text, nullable=False)  # Changed from DateTime to Text
+    datetime = db.Column(db.Text, nullable=False)
     location = db.Column(db.Text, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
@@ -32,7 +32,7 @@ class Event(db.Model, SerializerMixin):
     normal_tickets = db.Column(db.Integer, nullable=False, default=0)
 
     serialize_only = ('id', 'image', 'name', 'datetime', 'location', 'capacity', 'description', 'vip_tickets', 'normal_tickets')
-    exclude = ('user_events', 'feedback', 'event_organizers')
+    exclude = ('user_events', 'event_organizers')
 
     def __repr__(self):
         return f'<Event {self.id}, {self.name}>'
@@ -53,29 +53,12 @@ class UserEvent(db.Model, SerializerMixin):
     def __repr__(self):
         return f'<UserEvent {self.id}, {self.user_id}, {self.event_id}>'
 
-class Feedback(db.Model, SerializerMixin):
-    __tablename__ = 'feedback'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
-    feedback = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    event = db.relationship('Event', backref=db.backref('feedback', cascade='all, delete-orphan'))
-    user = db.relationship('User', backref=db.backref('feedback', cascade='all, delete-orphan'))
-
-    serialize_only = ('id', 'user_id', 'event_id', 'feedback', 'created_at')
-    exclude = ('user', 'event')
-
-    def __repr__(self):
-        return f'<Feedback {self.id}, {self.user_id}, {self.event_id}>'
-
 class Ticket(db.Model, SerializerMixin):
     __tablename__ = 'tickets'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Added user_id to link ticket to a user
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     ticket_number = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
     event = db.relationship('Event', backref=db.backref('tickets', cascade='all, delete-orphan'))

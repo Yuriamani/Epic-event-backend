@@ -1,12 +1,10 @@
 from . import db
 from flask_jwt_extended import create_access_token, jwt_required, create_refresh_token, get_jwt_identity, get_jwt
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource
-import jwt
-from datetime import datetime, timedelta
 
 auth = Blueprint('auth', __name__)
 api = Api(auth)
@@ -24,6 +22,7 @@ class UserSignUp(Resource):
         required_fields = ['username', 'email', 'password1', 'password2', 'role']
         if not validate_request_data(data, required_fields):
             return handle_error('Missing required fields', 400)
+        
         email = data.get('email')
         password1 = data.get('password1')
         password2 = data.get('password2')
@@ -37,29 +36,35 @@ class UserSignUp(Resource):
 
         if User.query.filter_by(email=email).first():
             return {'message': 'User already exists'}, 400
-        else:
-            new_user = User(email=data['email'], role=role, username=data['username'], password=generate_password_hash(
-                password1, method='pbkdf2:sha256'))
+        
+        try:
+            new_user = User(
+                email=email,
+                role=role,
+                username=data['username'],
+                password=generate_password_hash(password1, method='pbkdf2:sha256')
+            )
             db.session.add(new_user)
             db.session.commit()
             return {'message': 'Account Created'}, 201
+        except Exception as e:
+            db.session.rollback()
+            return handle_error(f"An error occurred: {str(e)}", 500)
 
 class UserLogin(Resource):
     def post(self):
         data = request.get_json()
-        username = data.get('username')
         email = data.get('email')
         password = data.get('password')
 
         user = User.query.filter_by(email=email).first()
         if user:
-            user_info = {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email
-                # Add more fields as necessary
-            }
             if check_password_hash(user.password, password):
+                user_info = {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email
+                }
                 access_token = create_access_token(identity=user_info)
                 refresh_token = create_refresh_token(identity=user_info)
                 return {'access_token': access_token, 'refresh_token': refresh_token}, 200
@@ -68,14 +73,12 @@ class UserLogin(Resource):
         else:
             return {'error': 'Email does not exist'}, 404
 
-
 class UserLogout(Resource):
     @jwt_required()
     def post(self):
-        jti = get_jwt()['jti']  # Get the JWT ID
-        blacklist = request.app.config['BLACKLIST']
-        blacklist.add(jti)  # Add the token ID to the blacklist
-        return {"message": "Logged out successfully"}  
+        jti = get_jwt()['jti']
+        current_app.config['BLACKLIST'].add(jti)
+        return {"message": "Logged out successfully"}, 200
 
 api.add_resource(UserSignUp, '/signup')
 api.add_resource(UserLogin, '/login')
