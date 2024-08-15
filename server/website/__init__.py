@@ -1,29 +1,42 @@
 from flask import Flask
-from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
 from dotenv import load_dotenv
-# import os
+import os
+from flask_jwt_extended import JWTManager
+
 # Initialize instances
 db = SQLAlchemy()
 migrate = Migrate()
-login_manager = LoginManager()
+jwt = JWTManager()
 
-def create_app():
+def create_app(): 
     load_dotenv()
     app = Flask(__name__)
-    app.secret_key = 'yuriamani7'
+    app.secret_key = os.getenv('SECRET_KEY')
     cors = CORS(app, origins='*')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://epic_events_h3bm_user:ykU3suwVensjbDjqsCfnBapwB4DBp1Pa@dpg-cqu51ebv2p9s73d0sfg0-a.frankfurt-postgres.render.com/epic_events_h3bm'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # JWT Configuration
+    app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+    app.config['JWT_ALGORITHM'] = 'HS256'
+
+    # In-memory blacklist store
+    app.config['BLACKLIST'] = set()
+
+    @jwt.token_in_blocklist_loader
+    def check_if_token_in_blacklist(decrypted_token):
+        jti = decrypted_token['jti']
+        return jti in app.config['BLACKLIST']
+
     app.json.compact = False
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    # Initialize JWT
+    jwt.init_app(app)
 
     # Import and register Blueprints
     from .auth import auth

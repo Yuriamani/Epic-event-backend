@@ -1,17 +1,22 @@
-from . import db, login_manager
-from flask import Blueprint, request, jsonify, redirect, url_for
+from . import db
+from flask_jwt_extended import create_access_token, jwt_required, create_refresh_token, get_jwt_identity, get_jwt
+from flask import Blueprint, request, jsonify
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource
-from flask_login import login_user, login_required, logout_user, current_user
+import jwt
+from datetime import datetime, timedelta
 
 auth = Blueprint('auth', __name__)
 api = Api(auth)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+class RefreshToken(Resource):
+    @jwt_required(refresh=True)
+    def post(self):
+        current_user = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user)
+        return {'access_token': new_access_token}
 
 class UserSignUp(Resource):
     def post(self):
@@ -37,31 +42,35 @@ class UserSignUp(Resource):
                 password1, method='pbkdf2:sha256'))
             db.session.add(new_user)
             db.session.commit()
-            login_user(new_user, remember=True)
             return {'message': 'Account Created'}, 201
 
 class UserLogin(Resource):
     def post(self):
         data = request.get_json()
+        username = data.get('username')
         email = data.get('email')
         password = data.get('password')
 
         user = User.query.filter_by(email=email).first()
         if user:
             if check_password_hash(user.password, password):
-                login_user(user, remember=True)
-                return {"message": "Logged in successfully"}
+                access_token = create_access_token(identity=username)
+                refresh_token = create_refresh_token(identity=username)
+                return {'access_token': access_token, 'refresh_token': refresh_token}
             else:
                 return {'error': 'Incorrect password'}, 401
         else:
             return {'error': 'Email does not exist'}, 404
 
 class UserLogout(Resource):
-    @login_required
+    @jwt_required()
     def post(self):
-        logout_user()
+        jti = get_jwt()['jti']  # Get the JWT ID
+        blacklist = request.app.config['BLACKLIST']
+        blacklist.add(jti)  # Add the token ID to the blacklist
         return {"message": "Logged out successfully"}  
 
 api.add_resource(UserSignUp, '/signup')
 api.add_resource(UserLogin, '/login')
 api.add_resource(UserLogout, '/logout')
+api.add_resource(RefreshToken, '/refresh')

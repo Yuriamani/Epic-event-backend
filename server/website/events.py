@@ -3,7 +3,7 @@ from . import db
 from .models import Event
 from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource
-from flask_login import login_required, current_user
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 events = Blueprint('events', __name__)
 api = Api(events) 
@@ -13,8 +13,9 @@ class Events(Resource):
         events = Event.query.all()
         return [event.to_dict() for event in events], 200
     
-    @login_required
+    @jwt_required()
     def patch(self):
+        current_user = get_jwt_identity()
         if current_user.role != 'admin':
             return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
@@ -42,10 +43,11 @@ class Events(Resource):
         db.session.commit()
         return event.to_dict(), 200
 
-    # @login_required
+    @jwt_required()
     def post(self):
-        # if current_user.role != 'admin':
-        #     return jsonify({'message': 'Access forbidden'}), 403
+        current_user = get_jwt_identity()
+        if current_user.role != 'admin':
+            return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
         required_fields = ['name', 'image', 'datetime', 'location', 'capacity', 'description']
         if not validate_request_data(data, required_fields):
@@ -66,8 +68,9 @@ class EventResource(Resource):
             return {'error': 'Event not found'}, 404
         return event.to_dict(), 200
 
-    @login_required
+    @jwt_required()
     def delete(self, id):
+        current_user = get_jwt_identity()
         if current_user.role != 'admin':
             return jsonify({'message': 'Access forbidden'}), 403
         if id is None:
