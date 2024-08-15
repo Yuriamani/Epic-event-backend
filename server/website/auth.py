@@ -53,14 +53,21 @@ class UserLogin(Resource):
 
         user = User.query.filter_by(email=email).first()
         if user:
+            user_info = {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+                # Add more fields as necessary
+            }
             if check_password_hash(user.password, password):
-                access_token = create_access_token(identity=username)
-                refresh_token = create_refresh_token(identity=username)
+                access_token = create_access_token(identity=user_info)
+                refresh_token = create_refresh_token(identity=user_info)
                 return {'access_token': access_token, 'refresh_token': refresh_token}, 200
             else:
                 return {'error': 'Incorrect password'}, 401
         else:
             return {'error': 'Email does not exist'}, 404
+
 
 class UserLogout(Resource):
     @jwt_required()
