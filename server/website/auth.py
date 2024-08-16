@@ -6,7 +6,7 @@ from . import db
 from .models import User
 from .utils import validate_request_data, handle_error
 
-auth = Blueprint('auth', _name_)
+auth = Blueprint('auth', __name__)
 api = Api(auth)
 
 class UserSignUp(Resource):
