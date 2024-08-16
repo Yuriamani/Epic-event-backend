@@ -1,20 +1,13 @@
-from . import db
+from flask import Blueprint, request, current_app
 from flask_jwt_extended import create_access_token, jwt_required, create_refresh_token, get_jwt_identity, get_jwt
-from flask import Blueprint, request, jsonify, current_app
-from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
-from .utils import validate_request_data, handle_error
 from flask_restful import Api, Resource
+from . import db
+from .models import User
+from .utils import validate_request_data, handle_error
 
-auth = Blueprint('auth', __name__)
+auth = Blueprint('auth', _name_)
 api = Api(auth)
-
-class RefreshToken(Resource):
-    @jwt_required(refresh=True)
-    def post(self):
-        current_user = get_jwt_identity()
-        new_access_token = create_access_token(identity=current_user)
-        return {'access_token': new_access_token}, 200
 
 class UserSignUp(Resource):
     def post(self):
@@ -79,6 +72,13 @@ class UserLogout(Resource):
         jti = get_jwt()['jti']
         current_app.config['BLACKLIST'].add(jti)
         return {"message": "Logged out successfully"}, 200
+
+class RefreshToken(Resource):
+    @jwt_required(refresh=True)
+    def post(self):
+        current_user = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user)
+        return {'access_token': new_access_token}, 200
 
 api.add_resource(UserSignUp, '/signup')
 api.add_resource(UserLogin, '/login')
