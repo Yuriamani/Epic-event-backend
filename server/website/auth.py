@@ -23,6 +23,7 @@ class UserSignUp(Resource):
         if not validate_request_data(data, required_fields):
             return handle_error('Missing required fields', 400)
         
+        username = data.get('username')
         email = data.get('email')
         password1 = data.get('password1')
         password2 = data.get('password2')
@@ -39,9 +40,9 @@ class UserSignUp(Resource):
         
         try:
             new_user = User(
+                username=username,
                 email=email,
                 role=role,
-                username=data['username'],
                 password=generate_password_hash(password1, method='pbkdf2:sha256')
             )
             db.session.add(new_user)
