@@ -4,11 +4,16 @@ from .models import User
 from .utils import validate_request_data, handle_error, validate_email
 from flask_restful import Api, Resource
 from werkzeug.security import generate_password_hash
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 users = Blueprint('users', __name__)
 api = Api(users)
 
 class UserData(Resource):
+    @jwt_required()
+    # current_user = get_jwt_identity()
+        # if current_user.role != 'admin':
+        #     return jsonify({'message': 'Access forbidden'}), 403
     def delete(self,id):
         if id is None:
             return {'error': 'Missing user ID'}, 400
@@ -26,6 +31,7 @@ class Users(Resource):
         users = User.query.all()
         return [user.to_dict() for user in users], 200
 
+    @jwt_required()
     def post(self):
         data = request.json
         required_fields = ['username', 'email', 'password']
@@ -41,6 +47,7 @@ class Users(Resource):
         db.session.commit()
         return user.to_dict(), 201
     
+    @jwt_required()
     def patch(self):
         data = request.json
         id = data.get('id')
@@ -66,5 +73,5 @@ class Users(Resource):
         db.session.commit()
         return user.to_dict(), 200
 
-api.add_resource(Users, '/users/<int:id>')
-api.add_resource(UserData, '/users')    
+api.add_resource(Users, '/users')
+api.add_resource(UserData, '/users/<int:id>')    

@@ -63,9 +63,6 @@ class EventResource(Resource):
 
     @jwt_required()
     def delete(self, id):
-        # current_user = get_jwt_identity()
-        # if current_user.role != 'admin':
-        #     return jsonify({'message': 'Access forbidden'}), 403
         if id is None:
             return {'error': 'Missing event ID'}, 400
 
