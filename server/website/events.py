@@ -15,9 +15,9 @@ class Events(Resource):
 
     @jwt_required()
     def post(self):
-        current_user = get_jwt_identity()
-        if current_user.role != 'admin':
-            return jsonify({'message': 'Access forbidden'}), 403
+        # current_user = get_jwt_identity()
+        # if current_user.role != 'admin':
+        #     return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
         required_fields = ['name', 'image', 'datetime', 'location', 'capacity', 'description']
         if not validate_request_data(data, required_fields):
@@ -40,9 +40,9 @@ class EventResource(Resource):
     
     @jwt_required()
     def patch(self, id):
-        current_user = get_jwt_identity()
-        if current_user.role != 'admin':
-            return jsonify({'message': 'Access forbidden'}), 403
+        # current_user = get_jwt_identity()
+        # if current_user.role != 'admin':
+        #     return jsonify({'message': 'Access forbidden'}), 403
         data = request.json
         if id is None:
             return {'error': 'Missing event ID'}, 400
@@ -69,9 +69,9 @@ class EventResource(Resource):
 
     @jwt_required()
     def delete(self, id):
-        current_user = get_jwt_identity()
-        if current_user.role != 'admin':
-            return jsonify({'message': 'Access forbidden'}), 403
+        # current_user = get_jwt_identity()
+        # if current_user.role != 'admin':
+        #     return jsonify({'message': 'Access forbidden'}), 403
         if id is None:
             return {'error': 'Missing event ID'}, 400
 
