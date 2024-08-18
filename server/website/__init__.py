@@ -5,7 +5,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
 # Initialize instances
 db = SQLAlchemy()

@@ -12,36 +12,6 @@ class Events(Resource):
     def get(self):
         events = Event.query.all()
         return [event.to_dict() for event in events], 200
-    
-    @jwt_required()
-    def patch(self):
-        current_user = get_jwt_identity()
-        if current_user.role != 'admin':
-            return jsonify({'message': 'Access forbidden'}), 403
-        data = request.json
-        id = data.get('id')
-        if id is None:
-            return {'error': 'Missing event ID'}, 400
-
-        event = Event.query.get(id)
-        if event is None:
-            return {'error': 'Event not found'}, 404
-
-        if 'name' in data:
-            event.name = data['name']
-        if 'image' in data:
-            event.image = data['image']
-        if 'datetime' in data:
-            event.datetime = data['datetime']
-        if 'location' in data:
-            event.location = data['location']
-        if 'description' in data:
-            event.description = data['description']
-        if 'capacity' in data:
-            event.capacity = data['capacity']
-
-        db.session.commit()
-        return event.to_dict(), 200
 
     @jwt_required()
     def post(self):
@@ -66,6 +36,35 @@ class EventResource(Resource):
         event = Event.query.get(id)
         if event is None:
             return {'error': 'Event not found'}, 404
+        return event.to_dict(), 200
+    
+    @jwt_required()
+    def patch(self, id):
+        current_user = get_jwt_identity()
+        if current_user.role != 'admin':
+            return jsonify({'message': 'Access forbidden'}), 403
+        data = request.json
+        if id is None:
+            return {'error': 'Missing event ID'}, 400
+
+        event = Event.query.get(id)
+        if event is None:
+            return {'error': 'Event not found'}, 404
+
+        if 'name' in data:
+            event.name = data['name']
+        if 'image' in data:
+            event.image = data['image']
+        if 'datetime' in data:
+            event.datetime = data['datetime']
+        if 'location' in data:
+            event.location = data['location']
+        if 'description' in data:
+            event.description = data['description']
+        if 'capacity' in data:
+            event.capacity = data['capacity']
+
+        db.session.commit()
         return event.to_dict(), 200
 
     @jwt_required()

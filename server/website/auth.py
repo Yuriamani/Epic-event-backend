@@ -56,7 +56,8 @@ class UserLogin(Resource):
                 user_info = {
                     "id": user.id,
                     "username": user.username,
-                    "email": user.email
+                    "email": user.email,
+                    "role": user.role
                 }
                 access_token = create_access_token(identity=user_info)
                 refresh_token = create_refresh_token(identity=user_info)
