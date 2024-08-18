@@ -8,6 +8,19 @@ from werkzeug.security import generate_password_hash
 users = Blueprint('users', __name__)
 api = Api(users)
 
+class UserData(Resource):
+    def delete(self,id):
+        if id is None:
+            return {'error': 'Missing user ID'}, 400
+
+        user = User.query.get(id)
+        if user is None:
+            return {'error': 'user not found'}, 404
+
+        db.session.delete(user)
+        db.session.commit()
+        return {'message': 'user deleted successfully'}, 200
+    
 class Users(Resource):
     def get(self):
         users = User.query.all()
@@ -52,19 +65,6 @@ class Users(Resource):
 
         db.session.commit()
         return user.to_dict(), 200
-    
-    def delete(self):
-        data = request.json
-        id = data.get('id')
-        if id is None:
-            return {'error': 'Missing user ID'}, 400
 
-        user = User.query.get(id)
-        if user is None:
-            return {'error': 'user not found'}, 404
-
-        db.session.delete(user)
-        db.session.commit()
-        return {'message': 'user deleted successfully'}, 200
-
-api.add_resource(Users, '/users')    
+api.add_resource(Users, '/users/<int:id>')
+api.add_resource(UserData, '/users')    
