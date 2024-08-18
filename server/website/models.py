@@ -28,10 +28,10 @@ class Event(db.Model, SerializerMixin):
     location = db.Column(db.Text, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
-    vip_tickets = db.Column(db.Integer, nullable=False, default=0)
-    normal_tickets = db.Column(db.Integer, nullable=False, default=0)
+    available_tickets = db.Column(db.Integer)
+    ticket_price = db.Column(db.Integer)
 
-    serialize_only = ('id', 'image', 'name', 'datetime', 'location', 'capacity', 'description', 'vip_tickets', 'normal_tickets')
+    serialize_only = ('id', 'image', 'name', 'datetime', 'location', 'capacity', 'description', 'available_tickets', 'ticket_price')
     exclude = ('user_events', 'event_organizers')
 
     def __repr__(self):
